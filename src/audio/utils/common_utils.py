@@ -94,14 +94,3 @@ def majority_voting(targets: list[np.ndarray], predicts: list[np.ndarray], sampl
     # one-hot encoding grouped predicts
     preds = [(np.arange(len(predicts[0])) == i).astype(int) for i in df['predicts'].values]
     return df['targets'].to_list(), preds, df['filenames'].to_list()
-
-
-# def load_config_file(path_to_config_file: str) -> Dict[str, Union[str, int, float, bool]]:
-#     sys.path.insert(1, str(os.path.sep).join(path_to_config_file.split(os.path.sep)[:-1]))
-#     name = os.path.basename(path_to_config_file).split(".")[0]
-#     config = __import__(name)
-#     # convert it to dict
-#     config = vars(config)
-#     # exclude all system varibles
-#     config = {key: value for key, value in config.items() if not key.startswith("__")}
-#     return config

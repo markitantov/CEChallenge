@@ -13,7 +13,7 @@ import torchvision
 from torch.utils.data import Dataset
 from transformers import Wav2Vec2Processor
 
-from config import config
+from config import config as config_expr
 
 
 class AbawExprDataset(Dataset):
@@ -261,10 +261,10 @@ class AbawExprDataset(Dataset):
     
     
 if __name__ == "__main__":
-    aed = AbawExprDataset(audio_root=config_expr['FILTERED_WAV_ROOT'],
-                          video_root=config_expr['VIDEO_ROOT'],
-                          labels_root=config_expr['LABELS_ROOT'],
-                          features_root=config_expr['FEATURES_ROOT'],
+    aed = AbawExprDataset(audio_root=config_expr['ABAW_FILTERED_WAV_ROOT'],
+                          video_root=config_expr['ABAW_VIDEO_ROOT'],
+                          labels_root=config_expr['ABAW_LABELS_ROOT'],
+                          features_root=config_expr['ABAW_FEATURES_ROOT'],
                           shift=2, min_w_len=2, max_w_len=4)
     
     print(len(aed))    

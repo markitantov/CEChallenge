@@ -22,6 +22,7 @@ from data.meld_dataset import MeldDataset
 from net_trainer.net_trainer import NetTrainer
 
 from models.audio_expr_models import *
+from loss.loss import SoftFocalLoss, SoftFocalLossWrapper
 
 from utils.data_utils import get_source_code
 
@@ -177,7 +178,9 @@ def main(config: dict) -> None:
     
     class_sample_count = np.unique(np.asarray(sum([dataset.labels for dataset in datasets['train'].datasets], [])), return_counts=True)[1]
     class_weights = torch.Tensor(max(class_sample_count) / class_sample_count).to(device)
-    loss = torch.nn.CrossEntropyLoss(weight=class_weights, label_smoothing=.2)
+    # loss = torch.nn.CrossEntropyLoss(weight=class_weights, label_smoothing=.2)
+    loss = SoftFocalLossWrapper(focal_loss=SoftFocalLoss(alpha=class_weights), num_classes=len(c_names))
+
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer,
