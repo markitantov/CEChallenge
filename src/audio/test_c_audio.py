@@ -12,14 +12,14 @@ import torch.nn.functional as F
 
 from data.c_expr_dataset import CExprDataset
 
-from models.audio_expr_models import ExprModelV1
-
+from models.audio_expr_models import *
 
 
 def iterate_model(model: torch.nn.Module,
                   device: torch.device,
                   phase: str, 
                   dataloader: torch.utils.data.dataloader.DataLoader, 
+                  group_predicts_fn: callable = None, 
                   verbose: bool = True) -> tuple[list[np.ndarray], list[np.ndarray], list[dict]]:
 
     targets = []
@@ -47,11 +47,14 @@ def iterate_model(model: torch.nn.Module,
 
         predicts.extend(preds.cpu().detach().numpy())
         sample_info.extend(s_info)
+
+    if group_predicts_fn:
+        targets, predicts, sample_info = group_predicts_fn(np.asarray(targets), np.asarray(predicts), sample_info)
        
     return targets, predicts, sample_info
 
 
-def main(model_params) -> None:
+def main(model_params: dict, group_predicts_fn: callable = None) -> None:
     db_root_path = '/media/maxim/Databases/C-EXPR-DB/'
     is_filtered = True
     batch_size = 64
@@ -75,7 +78,8 @@ def main(model_params) -> None:
                                     video_root=video_root, 
                                     labels_root=None, 
                                     features_root=features_root, 
-                                    vad_file_path=vad_file_path)
+                                    vad_file_path=vad_file_path,
+                                    shift=2, min_w_len=2, max_w_len=4)
     
     c_names = ['Neutral', 'Anger', 'Disgust', 'Fear', 'Happiness', 'Sadness', 'Surprise', 'Other']    
         
@@ -90,10 +94,8 @@ def main(model_params) -> None:
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    model = ExprModelV1.from_pretrained('audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim')
-    model.load_state_dict(torch.load(os.path.join(model_params['root_path'], 
-                                                  model_params['model_name'], 
-                                                  'epoch_{}.pth'.format(model_params['epoch'])))['model_state_dict'])
+    model = model_params['model_cls'].from_pretrained('audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim')
+    model.load_state_dict(torch.load(os.path.join(model_params['root_path'], 'epoch_{}.pth'.format(model_params['epoch'])))['model_state_dict'])
     model.to(device)
 
     res = {}
@@ -102,6 +104,7 @@ def main(model_params) -> None:
                                                        device=device,
                                                        phase='test', 
                                                        dataloader=v,
+                                                       group_predicts_fn=group_predicts_fn,
                                                        verbose=False)
         
         new_sample_info = {}
@@ -113,7 +116,6 @@ def main(model_params) -> None:
             
         res[ds] = []
         for idx, t in enumerate(targets):
-            print(idx)
             res[ds].append({
                 'targets': t,
                 'predicts': predicts[idx],
@@ -124,12 +126,15 @@ def main(model_params) -> None:
                 'end_f': int(new_sample_info['end_f'][idx]),
             })
 
-    print(res[ds])
 
 if __name__ == '__main__':
-    model_params = {'model_name': 'Filtered_wExprModelV1-2024.02.08-12.16.25', 'epoch': 89}
-    model_params = {'model_name': 'NotFiltered_wExprModelV1-2024.02.08-18.09.07', 'epoch': 98}
+    parameters = [
+        {'model_name': 'CESLWExprModelV2-2024.02.22-10.06.13', 'model_cls': ExprModelV2, 'epoch': 74},
+        {'model_name': 'CESLWa-ExprModelV2-2024.02.19-07.59.20', 'model_cls': ExprModelV2, 'epoch': 100},
+        {'model_name': 'CESLWExprModelV3-2024.02.22-14.14.01', 'model_cls': ExprModelV3, 'epoch': 55},
+        {'model_name': 'CESLWa-ExprModelV3-2024.02.22-00.35.01', 'model_cls': ExprModelV3, 'epoch': 77},
+    ]
 
-    model_params['root_path'] = '/media/maxim/WesternDigitalNew/abaw_models_share/'
-
-    main(model_params)
+    for model_params in parameters:
+        model_params['root_path'] = os.path.join('/media/maxim/WesternDigital/ABAWLogs/C', model_params['model_name'], 'models')
+        main(model_params)

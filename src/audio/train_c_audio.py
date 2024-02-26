@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from torchvision import transforms
 
-from config import config
+from config import c_config
 
 from augmentation.wave_augmentation import RandomChoice, PolarityInversion, WhiteNoise, Gain
 
@@ -50,7 +50,7 @@ def main(config: dict) -> None:
     abaw_features_root = config['ABAW_FEATURES_ROOT']
 
     meld_audio_root = config['MELD_FILTERED_WAV_ROOT'] if config['FILTERED'] else config['MELD_WAV_ROOT']
-    meld_labels_file_path = config['MELD_LABELS_FILE_PATH']
+    meld_labels_root = config['MELD_LABELS_ROOT']
     meld_vad_root = config['MELD_VAD_ROOT']
 
     logs_root = config['LOGS_ROOT']
@@ -79,7 +79,7 @@ def main(config: dict) -> None:
         if 'train' in ds:
             metadata_info[ds] = {
                 'abaw': os.path.join(abaw_labels_root, '{0}_Set'.format(ds_names[ds].capitalize())),
-                'meld': os.path.join(meld_labels_file_path, '{0}_sent_emo.csv'.format(ds_names[ds]))
+                'meld': os.path.join(meld_labels_root, '{0}_sent_emo.csv'.format(ds_names[ds]))
             }
 
             if aug:
@@ -98,7 +98,7 @@ def main(config: dict) -> None:
 
             
             if 'meld' in ds:
-                metadata_info[ds] = os.path.join(meld_labels_file_path, '{0}_sent_emo.csv'.format(ds_names[ds]))
+                metadata_info[ds] = os.path.join(meld_labels_root, '{0}_sent_emo.csv'.format(ds_names[ds]))
 
             all_transforms[ds] = None
 
@@ -176,9 +176,12 @@ def main(config: dict) -> None:
     
     model.to(device)
     
-    class_sample_count = np.unique(np.asarray(sum([dataset.labels for dataset in datasets['train'].datasets], [])), return_counts=True)[1]
+    class_sample_count = np.sum([dataset.expr_labels_counts for dataset in datasets['train'].datasets], axis=0) 
+    print(class_sample_count)
+    
     class_weights = torch.Tensor(max(class_sample_count) / class_sample_count).to(device)
     # loss = torch.nn.CrossEntropyLoss(weight=class_weights, label_smoothing=.2)
+    
     loss = SoftFocalLossWrapper(focal_loss=SoftFocalLoss(alpha=class_weights), num_classes=len(c_names))
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -211,7 +214,7 @@ def run_c_training() -> None:
     for augmentation in [True, False]:
         for filtered in [True, False]:
             for m_cls in model_cls:
-                cfg = deepcopy(config)
+                cfg = deepcopy(c_config)
                 cfg['FILTERED'] = filtered
                 cfg['AUGMENTATION'] = augmentation
                 cfg['MODEL_PARAMS']['model_cls'] = m_cls

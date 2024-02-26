@@ -4,7 +4,7 @@ sys.path.append('../src')
 
 from models.audio_expr_models import *
 
-config: dict = {
+c_config: dict = {
     'ABAW_WAV_ROOT': '/media/maxim/Databases/ABAW2024/data/wavs',
     'ABAW_FILTERED_WAV_ROOT': '/media/maxim/Databases/ABAW2024/data/vocals',
     'ABAW_VIDEO_ROOT': '/media/maxim/Databases/ABAW2024/data/videos',
@@ -13,8 +13,14 @@ config: dict = {
 
     'MELD_WAV_ROOT': '/media/maxim/Databases/MELD.Raw/wavs',
     'MELD_FILTERED_WAV_ROOT': '/media/maxim/Databases/MELD.Raw/vocals',
-    'MELD_LABELS_FILE_PATH': '/media/maxim/Databases/MELD.Raw/labels',
+    'MELD_LABELS_ROOT': '/media/maxim/Databases/MELD.Raw/labels',
     'MELD_VAD_ROOT': '/media/maxim/Databases/MELD.Raw/',
+    
+    'C_WAV_ROOT': '/media/maxim/Databases/C-EXPR-DB/wavs/',
+    'C_FILTERED_WAV_ROOT': '/media/maxim/Databases/C-EXPR-DB/vocals/',
+    'C_VIDEO_ROOT': '/media/maxim/Databases/C-EXPR-DB/videos/',
+    'C_LABELS_ROOT': None,
+    'C_FEATURES_ROOT': '/media/maxim/Databases/C-EXPR-DB/features/open_mouth/',
     
     ###
     'LOGS_ROOT': '/media/maxim/WesternDigital/ABAWLogs/C',

@@ -15,6 +15,8 @@ import torchvision
 from torch.utils.data import Dataset
 from transformers import Wav2Vec2Processor
 
+from config import c_config
+
 
 class MeldDataset(Dataset):
     """Meld dataset
@@ -53,7 +55,8 @@ class MeldDataset(Dataset):
         self.transform = transform
         
         self.meta = []
-        self.labels = []
+        self.expr_labels = []
+        self.expr_labels_counts = []
         
         self.processor = Wav2Vec2Processor.from_pretrained(processor_name)
         
@@ -113,6 +116,8 @@ class MeldDataset(Dataset):
             vad_info = pickle.load(handle)
 
         for lab in labs:
+            timings = []
+            
             fn = 'dia{0}_utt{1}.wav'.format(lab['Dialogue_ID'], lab['Utterance_ID'])
             if 'dia125_utt3' in fn: # filters broken file
                 continue
@@ -133,20 +138,25 @@ class MeldDataset(Dataset):
                     if end - start < min_w_len: # if less than min_w_len: get last -max_w_len elements
                         start = max(s['start'], s['end'] - max_w_len) # 0 or frame[-max_w_len] - # no less than s[start]
                         end = s['end']
-                        if s_len <= max_w_len:
-                            continue
 
-                    abaw_label = self.meld_to_abaw_labels(lab['Emotion'])
-                    self.meta.append({
+                    exprl = self.meld_to_abaw_labels(lab['Emotion'])
+                    timings.append({
                         'wav_filename': fn,
                         'start_t': start / self.sr,
                         'end_t': end / self.sr,
                         'start_f': start,
                         'end_f': end,
-                        'label': abaw_label
+                        'expr': exprl
                     })
-
-                    self.labels.append(abaw_label)
+                    
+            timings = [dict(t) for t in {tuple(d.items()) for d in timings}]
+            expr_processed_labs = [t['expr'] for t in timings]
+            
+            self.meta.extend(timings)
+            self.expr_labels.extend(expr_processed_labs)
+        
+        self.expr_labels_counts = np.unique(np.asarray(self.expr_labels), return_counts=True)[1]
+        self.expr_labels_counts = np.append(self.expr_labels_counts, 0)
     
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int, list[dict]]:
         """Gets sample from dataset:
@@ -187,7 +197,7 @@ class MeldDataset(Dataset):
             'end_f': data['end_f'],
         }
 
-        y = data['label']
+        y = data['expr']
         
         return torch.FloatTensor(wave), y, [sample_info]
             
@@ -201,19 +211,20 @@ class MeldDataset(Dataset):
     
 
 if __name__ == "__main__":
-    db_root_path = '/media/maxim/Databases/MELD.Raw/'
-    is_filtered = True
-
     for ds in ['train', 'dev', 'test']:
-        print(ds)
-        audio_root = os.path.join(db_root_path, 'vocals', ds) if is_filtered else os.path.join(db_root_path, 'wavs', ds)
-        labels_file_path = os.path.join(db_root_path, 'labels', '{0}_sent_emo.csv'.format(ds))
-        vad_file_path = os.path.join(db_root_path, 'vad_{0}_16000.pickle'.format(ds))
+        md = MeldDataset(audio_root=os.path.join(c_config['MELD_WAV_ROOT'], ds), 
+                         labels_file_path=os.path.join(c_config['MELD_LABELS_ROOT'], '{0}_sent_emo.csv'.format(ds)),
+                         vad_file_path=os.path.join(c_config['MELD_VAD_ROOT'], 'vad_{0}_vocals_16000.pickle'.format(ds)), 
+                         shift=2, min_w_len=2, max_w_len=4)
+        
+        dl = torch.utils.data.DataLoader(
+            md,
+            batch_size=8,
+            shuffle=False,
+            num_workers=8)
 
-        md = MeldDataset(audio_root=audio_root, labels_file_path=labels_file_path, vad_file_path=vad_file_path)
-        print(len(md))    
-        print(md[1][0].shape)
-        print(md[1][1])
-        print()
-    
+        for d in dl:
+            pass
+            
+        print('OK')
     
