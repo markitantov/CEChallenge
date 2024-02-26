@@ -152,7 +152,7 @@ def main(config: dict) -> None:
     define_seed(0)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    experiment_name = 'CESLW{0}{1}-{2}'.format('a-' if aug else '',
+    experiment_name = 'CELSW{0}{1}-{2}'.format('a-' if aug else '-',
                                                model_cls.__name__.replace('-', '_').replace('/', '_'),
                                                datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S"))
         
@@ -177,12 +177,10 @@ def main(config: dict) -> None:
     model.to(device)
     
     class_sample_count = np.sum([dataset.expr_labels_counts for dataset in datasets['train'].datasets], axis=0) 
-    print(class_sample_count)
     
     class_weights = torch.Tensor(max(class_sample_count) / class_sample_count).to(device)
-    # loss = torch.nn.CrossEntropyLoss(weight=class_weights, label_smoothing=.2)
-    
-    loss = SoftFocalLossWrapper(focal_loss=SoftFocalLoss(alpha=class_weights), num_classes=len(c_names))
+    loss = torch.nn.CrossEntropyLoss(weight=class_weights, label_smoothing=.2)
+    # loss = SoftFocalLossWrapper(focal_loss=SoftFocalLoss(alpha=class_weights), num_classes=len(c_names))
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
