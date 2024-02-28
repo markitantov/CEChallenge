@@ -305,7 +305,11 @@ class NetTrainer:
 
             labs = labs.to(self.device)
             
-            has_labels = torch.all(labs != -1)
+            if self.problem_type == ProblemType.CLASSIFICATION:
+                has_labels = torch.all(labs != -1)
+            else:
+                has_labels = True
+            
             if (mixup_alpha) and ('train' in phase):
                 inps, labs = self.mixup_data(inps, labs, alpha=mixup_alpha)
             
