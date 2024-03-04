@@ -187,9 +187,14 @@ class NetTrainer:
                     'Epoch: {}. {}. Loss: {:.4f}, Performance:'.format(epoch, 
                                                                        phase.capitalize(), 
                                                                        epoch_loss))
-                performance = self.calc_metrics(np.hstack(targets), 
-                                                np.asarray(predicts).reshape(-1, len(self.c_names)), 
-                                                verbose=verbose)
+                if self.problem_type == ProblemType.CLASSIFICATION:
+                    performance = self.calc_metrics(np.hstack(targets), 
+                                                    np.asarray(predicts).reshape(-1, len(self.c_names)), 
+                                                    verbose=verbose)
+                else:
+                    performance = self.calc_metrics(np.stack(targets), 
+                                                    np.stack(predicts), 
+                                                    verbose=verbose)
                 
                 d_epoch_stats['{}_loss'.format(phase)] = epoch_loss
                 summary[phase].add_scalar('loss', epoch_loss, epoch)
@@ -313,8 +318,6 @@ class NetTrainer:
                 labs = [d.to(self.device) for d in labs]
             else:
                 labs = labs.to(self.device)
-
-            labs = labs.to(self.device)
             
             if self.problem_type == ProblemType.CLASSIFICATION:
                 has_labels = torch.all(labs != -1)
@@ -322,7 +325,7 @@ class NetTrainer:
                 has_labels = True
             
             if (mixup_alpha) and ('train' in phase):
-                inps, labs = self.mixup_data(inps, labs, alpha=mixup_alpha)
+                inps, labs = self.mixup_data(inps, labs.flatten(), alpha=mixup_alpha)
             
             self.optimizer.zero_grad()
 
