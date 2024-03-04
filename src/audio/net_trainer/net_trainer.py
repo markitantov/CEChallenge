@@ -187,7 +187,9 @@ class NetTrainer:
                     'Epoch: {}. {}. Loss: {:.4f}, Performance:'.format(epoch, 
                                                                        phase.capitalize(), 
                                                                        epoch_loss))
-                performance = self.calc_metrics(targets, predicts, verbose=verbose)
+                performance = self.calc_metrics(np.hstack(targets), 
+                                                np.asarray(predicts).reshape(-1, len(self.c_names)), 
+                                                verbose=verbose)
                 
                 d_epoch_stats['{}_loss'.format(phase)] = epoch_loss
                 summary[phase].add_scalar('loss', epoch_loss, epoch)
@@ -207,7 +209,9 @@ class NetTrainer:
                         max_perf[phase]['epoch'] = epoch
                     
                     if self.problem_type == ProblemType.CLASSIFICATION:
-                        cm = conf_matrix(targets, predicts, [i for i in range(len(self.c_names))])
+                        cm = conf_matrix(np.hstack(targets), 
+                                         np.asarray(predicts).reshape(-1, len(self.c_names)), 
+                                         [i for i in range(len(self.c_names))])
                         res_name = 'epoch_{0}_{1}_{2}'.format(epoch, phase, epoch_score)
                         plot_conf_matrix(cm, 
                                          labels=self.c_names_to_display if self.c_names_to_display else self.c_names,
@@ -228,7 +232,9 @@ class NetTrainer:
                 
                 if self.problem_type == ProblemType.CLASSIFICATION:
                     if os.path.exists(os.path.join(self.logging_paths['model_path'], 'epoch_{0}.pth'.format(epoch))):
-                        cm = conf_matrix(targets, predicts, [i for i in range(len(self.c_names))])
+                        cm = conf_matrix(np.hstack(targets), 
+                                         np.asarray(predicts).reshape(-1, len(self.c_names)), 
+                                         [i for i in range(len(self.c_names))])
                         res_name = 'epoch_{0}_{1}_{2}'.format(epoch, phase, epoch_score)
                         plot_conf_matrix(cm,
                                          labels=self.c_names_to_display if self.c_names_to_display else self.c_names,
@@ -299,9 +305,14 @@ class NetTrainer:
         for idx, data in enumerate(tqdm(dataloader, disable=not verbose)):
             inps, labs, s_info = data
             if isinstance(inps, list):
-                inps = [ d.to(self.device) for d in inps ]
+                inps = [d.to(self.device) for d in inps]
             else:
                 inps = inps.to(self.device)
+
+            if isinstance(labs, list):
+                labs = [d.to(self.device) for d in labs]
+            else:
+                labs = labs.to(self.device)
 
             labs = labs.to(self.device)
             
@@ -320,7 +331,7 @@ class NetTrainer:
             with torch.set_grad_enabled('train' in phase):
                 preds = self.model(inps)
                 if self.problem_type == ProblemType.CLASSIFICATION:
-                    loss_value = self.loss(preds, labs)
+                    loss_value = self.loss(preds.reshape(-1, len(self.c_names)), labs.flatten())
                 else:
                     loss_value = self.loss(preds.reshape(-1, 2), labs.reshape(-1, 2)) 
 
@@ -335,11 +346,21 @@ class NetTrainer:
             if has_labels:
                 running_loss += loss_value.item() * dataloader.batch_size
             
-            targets.extend(labs.cpu().numpy())
+            if isinstance(labs, list):
+                labs = [d.cpu().numpy() for d in labs]
+            else:
+                labs = labs.cpu().numpy()
+                
+            targets.extend(labs)
             if self.problem_type == ProblemType.CLASSIFICATION:
                 preds = F.softmax(preds, dim=-1)
+                
+            if isinstance(labs, list):
+                preds = [d.cpu().detach().numpy() for d in preds]
+            else:
+                preds = preds.cpu().detach().numpy()
 
-            predicts.extend(preds.cpu().detach().numpy())
+            predicts.extend(preds)
             sample_info.extend(s_info)
 
         epoch_loss = running_loss / iters if has_labels else 0
