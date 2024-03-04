@@ -30,6 +30,7 @@ class MeldDataset(Dataset):
         shift (int, optional): Window shift in seconds. Defaults to 4.
         min_w_len (int, optional): Minimum window length in seconds. Defaults to 2.
         max_w_len (int, optional): Maximum window length in seconds. Defaults to 4.
+        num_classes (int, optional): Maximum number of classess. Defaults to 8.
         transform (torchvision.transforms.transforms.Compose, optional): transform object. Defaults to None.
         processor_name (str, optional): Name of model in transformers library. Defaults to 'audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim'.
     """
@@ -41,6 +42,7 @@ class MeldDataset(Dataset):
                  shift: int = 4, 
                  min_w_len: int = 2, 
                  max_w_len: int = 4, 
+                 num_classes: int = 8,
                  transform: torchvision.transforms.transforms.Compose = None, 
                  processor_name: str = 'audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim') -> None:
         self.audio_root = audio_root
@@ -52,6 +54,8 @@ class MeldDataset(Dataset):
         self.min_w_len = min_w_len
         self.max_w_len = max_w_len
         
+        self.num_classes = num_classes
+
         self.transform = transform
         
         self.meta = []
@@ -140,6 +144,9 @@ class MeldDataset(Dataset):
                         end = s['end']
 
                     exprl = self.meld_to_abaw_labels(lab['Emotion'])
+                    if exprl > self.num_classes - 1:
+                        continue
+
                     timings.append({
                         'wav_filename': fn,
                         'start_t': start / self.sr,
@@ -156,7 +163,8 @@ class MeldDataset(Dataset):
             self.expr_labels.extend(expr_processed_labs)
         
         self.expr_labels_counts = np.unique(np.asarray(self.expr_labels), return_counts=True)[1]
-        self.expr_labels_counts = np.append(self.expr_labels_counts, 0)
+        if self.num_classes > 7:
+            self.expr_labels_counts = np.append(self.expr_labels_counts, 0)
     
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int, list[dict]]:
         """Gets sample from dataset:

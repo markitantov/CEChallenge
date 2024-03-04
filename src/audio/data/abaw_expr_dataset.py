@@ -33,6 +33,7 @@ class AbawExprDataset(Dataset):
         shift (int, optional): Window shift in seconds. Defaults to 4.
         min_w_len (int, optional): Minimum window length in seconds. Defaults to 2.
         max_w_len (int, optional): Maximum window length in seconds. Defaults to 4.
+        num_classes (int, optional): Maximum number of classess. Defaults to 8.
         transform (torchvision.transforms.transforms.Compose, optional): transform object. Defaults to None.
         processor_name (str, optional): Name of model in transformers library. Defaults to 'audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim'.
     """
@@ -45,6 +46,7 @@ class AbawExprDataset(Dataset):
                  shift: int = 4, 
                  min_w_len: int = 2, 
                  max_w_len: int = 4, 
+                 num_classes: int = 8,
                  transform: torchvision.transforms.transforms.Compose = None, 
                  processor_name: str = 'audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim') -> None:
         self.audio_root = audio_root
@@ -57,6 +59,8 @@ class AbawExprDataset(Dataset):
         self.min_w_len = min_w_len
         self.max_w_len = max_w_len
         
+        self.num_classes = num_classes
+
         self.transform = transform
         
         self.meta = []
@@ -141,6 +145,8 @@ class AbawExprDataset(Dataset):
                     end = frames[-1]
 
                 exprl = max(set(expr_window), key=expr_window.count)
+                if exprl > self.num_classes - 1:
+                    continue
 
                 timings.append({
                     'lab_filename': lab_filename,
