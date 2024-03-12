@@ -53,6 +53,18 @@ class ExprModelV1(Wav2Vec2PreTrainedModel):
             for param in self.wav2vec2.encoder.layers[-1 * (i + 1)].parameters():
                 param.requires_grad = True
  
+    def get_features(self, x):
+        outputs = self.wav2vec2(x)
+
+        x, h = self.gru(outputs[0])
+
+        x = x.permute(0, 2, 1)
+        features = self.time_downsample(x)
+        features = features.squeeze()
+        
+        x = self.feature_downsample(features)
+        return x, features
+
     def forward(self, x):
         outputs = self.wav2vec2(x)
  
@@ -102,6 +114,19 @@ class ExprModelV2(Wav2Vec2PreTrainedModel):
         for i in range(0, num_blocks):
             for param in self.wav2vec2.encoder.layers[-1 * (i + 1)].parameters():
                 param.requires_grad = True
+
+    def get_features(self, x):
+        x = self.wav2vec2(x)[0]
+
+        x = self.tl1(query=x, key=x, value=x)
+        x = self.tl2(query=x, key=x, value=x)
+
+        x = x.permute(0, 2, 1)
+        features = self.time_downsample(x)
+        features = features.squeeze()
+        
+        x = self.feature_downsample(features)
+        return x, features
 
     def forward(self, x):
         x = self.wav2vec2(x)[0]
@@ -159,6 +184,19 @@ class ExprModelV3(Wav2Vec2PreTrainedModel):
         for i in range(0, num_blocks):
             for param in self.wav2vec2.encoder.layers[-1 * (i + 1)].parameters():
                 param.requires_grad = True
+
+    def get_features(self, x):
+        x = self.wav2vec2(x)[0]
+
+        x = self.tl1(query=x, key=x, value=x)
+        x = self.tl2(query=x, key=x, value=x)
+
+        x = x.permute(0, 2, 1)
+        features = self.time_downsample(x)
+        features = features.squeeze()
+        
+        x = self.feature_downsample(features)
+        return x, features
 
     def forward(self, x):
         x = self.wav2vec2(x)[0]
