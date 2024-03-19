@@ -89,7 +89,7 @@ def main(model_params, c_conf, afew_conf) -> None:
         if 'afew' in ds:
             datasets[ds] = AfewFEDataset(audio_root=metadata_info[ds]['audio_root'],
                                          vad_file_path=metadata_info[ds]['vad_file_path'],
-                                         num_classes=7 if seven_classes else 8,
+                                        #  num_classes=7 if seven_classes else 8,
                                          shift=2, min_w_len=2, max_w_len=4)
         elif 'abaw_c' in ds:
             datasets[ds] = AbawFEDataset(audio_root=c_audio_root, 
@@ -98,7 +98,7 @@ def main(model_params, c_conf, afew_conf) -> None:
                                          label_filenames=metadata_info[ds]['label_filenames'],
                                          dataset=metadata_info[ds]['dataset'],
                                          features_root=c_features_root, 
-                                         num_classes=7 if seven_classes else 8,
+                                        #  num_classes=7 if seven_classes else 8,
                                          shift=2, min_w_len=2, max_w_len=4)
         else:
             datasets[ds] = AbawFEDataset(audio_root=abaw_audio_root,
@@ -107,10 +107,10 @@ def main(model_params, c_conf, afew_conf) -> None:
                                          label_filenames=metadata_info[ds]['label_filenames'],
                                          dataset=metadata_info[ds]['dataset'],
                                          features_root=abaw_features_root,
-                                         num_classes=7 if seven_classes else 8,
+                                        #  num_classes=7 if seven_classes else 8,
                                          shift=2, min_w_len=2, max_w_len=4)
 
-    if seven_classes: 
+    if not seven_classes: 
         c_names = ['Neutral', 'Anger', 'Disgust', 'Fear', 'Happiness', 'Sadness', 'Surprise'] 
     else:
         c_names = ['Neutral', 'Anger', 'Disgust', 'Fear', 'Happiness', 'Sadness', 'Surprise', 'Other'] 
@@ -191,16 +191,16 @@ def main(model_params, c_conf, afew_conf) -> None:
                         new_sample_info[fn][keys_mapping[k]].append(si[k][idx])
 
         with open(os.path.join(logs_root, 
-                               '{0}{1}_{2}.pickle'.format(model_params['model_name'], '_F' if c_conf['FILTERED'] else '', ds)), 
+                               '{0}{1}_{2}_as8.pickle'.format(model_params['model_name'], '_F' if c_conf['FILTERED'] else '', ds)), 
                   'wb') as handle:
             pickle.dump(new_sample_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
     parameters = [
-        {'model_name': 'FLW-ExprModelV3-2024.03.02-11.42.11', 'model_cls': ExprModelV38, 'epoch': 63, 'filtered': False},
-        {'model_name': 'FLW-ExprModelV3-2024.03.01-20.26.51', 'model_cls': ExprModelV38, 'epoch': 26, 'filtered': True},
-        {'model_name': 'CELSW-ExprModelV3-2024.02.28-10.33.12', 'model_cls': ExprModelV38, 'epoch': 85, 'filtered': True},
-        {'model_name': 'CELSWa-ExprModelV3-2024.02.27-20.52.14', 'model_cls': ExprModelV38, 'epoch': 93, 'filtered': False},
+        # {'model_name': 'FLW-ExprModelV3-2024.03.02-11.42.11', 'model_cls': ExprModelV38, 'epoch': 63, 'filtered': False},
+        # {'model_name': 'FLW-ExprModelV3-2024.03.01-20.26.51', 'model_cls': ExprModelV38, 'epoch': 26, 'filtered': True},
+        # {'model_name': 'CELSW-ExprModelV3-2024.02.28-10.33.12', 'model_cls': ExprModelV38, 'epoch': 85, 'filtered': True},
+        # {'model_name': 'CELSWa-ExprModelV3-2024.02.27-20.52.14', 'model_cls': ExprModelV38, 'epoch': 93, 'filtered': False},
 
         {'model_name': '7cl-FLW-ExprModelV2-2024.03.04-11.52.11', 'model_cls': ExprModelV27, 'epoch': 51, 'filtered': False},
         {'model_name': '7cl-FLWa-ExprModelV3-2024.03.03-16.39.11', 'model_cls': ExprModelV37, 'epoch': 42, 'filtered': False},
