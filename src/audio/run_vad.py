@@ -35,11 +35,11 @@ def main(path_to_audio: str, output_path: str, sr: int = 16000) -> None:
 if    __name__ == '__main__':
 
     for fold in ['wavs', 'vocals']:
-        path_to_images = "/media/maxim/Databases/C-EXPR-DB/{0}/".format(fold)
-        path_to_pickle = "/media/maxim/Databases/C-EXPR-DB/vad_{0}.pickle".format(fold)
+        path_to_images = "/{0}/".format(fold) # TODO
+        path_to_pickle = "/vad_{0}.pickle".format(fold)  # TODO
         main(path_to_images, path_to_pickle)
     
-        path_to_images = "/media/maxim/Databases/MELD.Raw/{0}/".format(fold)
-        path_to_pickle = "/media/maxim/Databases/MELD.Raw/"
+        path_to_images = "/{0}/".format(fold) # TODO
+        path_to_pickle = "/" # TODO
         for ds in ['train', 'dev', 'test']:
             main(os.path.join(path_to_images, ds), os.path.join(path_to_pickle, 'vad_{0}_{1}.pickle'.format(ds, fold)))

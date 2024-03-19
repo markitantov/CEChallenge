@@ -209,7 +209,7 @@ if __name__ == '__main__':
     ]
 
     for model_params in parameters:
-        model_params['root_path'] = os.path.join('/media/maxim/WesternDigitalNew/AbawLogs/C', model_params['model_name'], 'models')
+        model_params['root_path'] = os.path.join('/', model_params['model_name'], 'models') # TODO
         print(model_params['model_name'])
 
         c_cfg = deepcopy(c_config)

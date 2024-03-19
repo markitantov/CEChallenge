@@ -55,7 +55,7 @@ def iterate_model(model: torch.nn.Module,
 
 
 def main(model_params: dict, group_predicts_fn: callable = None) -> None:
-    db_root_path = '/media/maxim/Databases/C-EXPR-DB/'
+    db_root_path = '/' # TODO
     is_filtered = True
     batch_size = 64
 
@@ -136,5 +136,5 @@ if __name__ == '__main__':
     ]
 
     for model_params in parameters:
-        model_params['root_path'] = os.path.join('/media/maxim/WesternDigital/ABAWLogs/C', model_params['model_name'], 'models')
+        model_params['root_path'] = os.path.join('/', model_params['model_name'], 'models') # TODO
         main(model_params)

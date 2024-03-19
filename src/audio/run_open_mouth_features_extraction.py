@@ -2,7 +2,7 @@
 This is the script for extracting the mouth open features from video.
 They are used for audio modality to detect speech segments
 
-Author: Danila Mamontov
+Author: *** # TODO
 """
 
 import os
@@ -108,7 +108,7 @@ def extract_surface_area(path_to_images: str, path_to_landmarks: str, speaker_id
 
 
 if    __name__ == '__main__':
-    path_to_images = "/media/maxim/Databases/C-EXPR-DB/faces/"
-    path_to_landmarks = "/media/maxim/Databases/C-EXPR-DB/features/open_mouth/"
+    path_to_images = "/" # TODO
+    path_to_landmarks = "/"  # TODO
     extract_surface_area(path_to_images, path_to_landmarks)
 

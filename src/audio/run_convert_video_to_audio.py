@@ -137,19 +137,19 @@ def convert_video_to_audio(files_root: str,
 
 
 if __name__ == "__main__":
-    files_root = "/media/maxim/Databases/ABAW2024/data/videos"
+    files_root = "/" # TODO
     convert_video_to_audio(files_root=files_root,
                            db='abaw',
                            filtering=True,
                            checking=False)
     
-    files_root = "/media/maxim/Databases/C-EXPR-DB/videos"
+    files_root = "/"  # TODO
     convert_video_to_audio(files_root=files_root,
                            db='abaw',
                            filtering=True,
                            checking=False)
 
-    files_root = '/media/maxim/Databases/MELD.Raw/videos/'
+    files_root = "/"  # TODO
     for d in ['train', 'dev', 'test']:
         convert_video_to_audio(files_root=os.path.join(files_root, d),
                                db='meld',
