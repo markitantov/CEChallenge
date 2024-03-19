@@ -230,7 +230,7 @@ class NetTrainer:
                         'epoch': epoch,
                         'model_state_dict': model.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
-                        'loss': loss
+                        'loss': loss.state_dict(),
                     }, os.path.join(self.logging_paths['model_path'], 'epoch_{0}.pth'.format(epoch)))
                     
                     model.to(self.device)
